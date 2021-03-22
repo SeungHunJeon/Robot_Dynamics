@@ -10,6 +10,7 @@ int main(int argc, char* argv[]) {
   // fixed size matrices and vectors
   Eigen::Matrix3d A, B;
   Eigen::Vector3d x, y;
+  Eigen::Matrix4d D;
 
   // matrix initialization methods
   A.setZero();
@@ -54,4 +55,11 @@ int main(int argc, char* argv[]) {
   // others
   std::cout<<"A is "<<A.rows()<<"X"<<A.cols()<<"\n\n";
 
+  Eigen::Vector3d xx;
+  xx << 1, 2, 3;
+
+  D << A, xx,
+  0, 0, 0, 1;
+
+  std::cout << D << "\n";
 }

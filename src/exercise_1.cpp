@@ -20,8 +20,13 @@ int main(int argc, char* argv[]) {
 
   // kinova configuration
   Eigen::VectorXd jointNominalConfig(kinova->getGeneralizedCoordinateDim());
-  jointNominalConfig << 0.0, 2.76, -1.57, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0;
+  jointNominalConfig << 0.0, -1.547, 1,2, -0.5, 1.1, 0.0, 0.0, 0.0, 0.0;
   kinova->setGeneralizedCoordinate(jointNominalConfig);
+
+  raisim::Vec<3> position1;
+  kinova->getBodyPosition(4, position1);
+  kinova->getDOF();
+  std::cout << position1 << "\n";
 
   // debug sphere
   auto debugSphere = server.addVisualSphere("debug_sphere", 0.15);
@@ -29,7 +34,7 @@ int main(int argc, char* argv[]) {
   debugSphere->setPosition(getEndEffectorPosition(jointNominalConfig));
 
   // visualization
-  server.launchServer();
+  server.launchServer(9000);
   for (int i=0; i<2000000; i++)
     std::this_thread::sleep_for(std::chrono::microseconds(1000));
 
