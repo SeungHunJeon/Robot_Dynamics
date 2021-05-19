@@ -9,8 +9,6 @@ Eigen::Matrix4d H01, H11i, H1i2, H22i, H2i3, H33i, H3i4, H44i, H4i5, H55i, H5i6,
 Eigen::Matrix4d H1e, H2e, H3e, H4e, H5e, H6e;
 Eigen::Vector3d P01, P12, P23, P34, P45, P56, P6e, P0e, zero;
 Eigen::Vector3d rpy01, rpy12, rpy23, rpy34, rpy45, rpy56, rpy6e;
-Eigen::Matrix3d I1, I2, I3, I4, I5, I6;
-double m1, m2, m3, m4, m5, m6;
 Eigen::Matrix<double, 3, 6> Ja, Jv;
 Eigen::Matrix<double, 6, 6> J;
 Eigen::MatrixXd JJ;
@@ -67,6 +65,8 @@ Eigen::Matrix4d HomogeneousMatrix (const Eigen::Matrix3d& RotationMatrix, Eigen:
 
 /// do not change the name of the method
 void calculate (const Eigen::VectorXd& gc) {
+
+
 
 
     P01 << 0, 0, 0.15675;
@@ -135,11 +135,6 @@ void calculate (const Eigen::VectorXd& gc) {
 
     P0e << H0e(12), H0e(13), H0e(14);
     k << 0, 0, 1;
-
-
-    ///
-
-
 
 }
 

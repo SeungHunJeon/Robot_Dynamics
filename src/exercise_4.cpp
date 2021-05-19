@@ -27,12 +27,20 @@ int main(int argc, char* argv[]) {
   /// DO NOT USE OR MODIFY THIS CODE. /////////////////////////////////////////////
 
   /// You can use these functions to debug but NOT IN YOUR SUBMISSION
-  // kinova->getBodyCOM_W();
-  // kinova->getDenseJacobian();
-
+//   std::cout << static_cast<Eigen::Vector3d>(kinova->getBodyCOM_W()) << std::endl;
+//   std::cout << kinova->getDenseJacobian() << std::endl;
+//    auto debugSphere = server.addVisualSphere("debug_sphere", 0.15);
+//    debugSphere->setColor(1,0,0,1);
+//    debugSphere->setPosition(getEndEffectorPosition(gc));
+//  std::cout << "driven Mass Matrix : " << getMassMatrix(gc) << "\n" << std::endl;
+//  std::cout << "raisim Mass Matrix : " << kinova->getMassMatrix() << "\n" << std::endl;
+//  std::cout << (getMassMatrix(gc) - kinova->getMassMatrix().e()).norm() << "\n" << std::endl;
   if((getMassMatrix(gc) - kinova->getMassMatrix().e()).norm() < 1e-8)
     std::cout<<"passed "<<std::endl;
 
+//  std::cout << "driven C : " << getNonlinearities(gc, gv) << "\n" << std::endl;
+//  std::cout << "raisim C : " << kinova->getNonlinearities() << "\n" << std::endl;
+//  std::cout << (getNonlinearities(gc, gv) - kinova->getNonlinearities().e()).norm() << std::endl;
   if((getNonlinearities(gc, gv) - kinova->getNonlinearities().e()).norm() < 1e-8)
     std::cout<<"passed "<<std::endl;
 

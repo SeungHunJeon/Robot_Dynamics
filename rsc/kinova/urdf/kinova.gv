@@ -9,12 +9,6 @@ node [shape=box];
 "kinova_link_5" [label="kinova_link_5"];
 "kinova_link_6" [label="kinova_link_6"];
 "kinova_end_effector" [label="kinova_end_effector"];
-"kinova_link_finger_1" [label="kinova_link_finger_1"];
-"kinova_link_finger_tip_1" [label="kinova_link_finger_tip_1"];
-"kinova_link_finger_2" [label="kinova_link_finger_2"];
-"kinova_link_finger_tip_2" [label="kinova_link_finger_tip_2"];
-"kinova_link_finger_3" [label="kinova_link_finger_3"];
-"kinova_link_finger_tip_3" [label="kinova_link_finger_tip_3"];
 "kinova_link_base_inertia" [label="kinova_link_base_inertia"];
 node [shape=ellipse, color=blue, fontcolor=blue];
 "world" -> "kinova_joint_base" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
@@ -33,18 +27,6 @@ node [shape=ellipse, color=blue, fontcolor=blue];
 "kinova_joint_6" -> "kinova_link_6"
 "kinova_link_6" -> "kinova_joint_end_effector" [label="xyz: 0 0 -0.16 \nrpy: -3.14159 -0 0"]
 "kinova_joint_end_effector" -> "kinova_end_effector"
-"kinova_link_6" -> "kinova_joint_finger_1" [label="xyz: 0.00279 0.03126 -0.11467 \nrpy: -1.5708 0.649262 1.35961"]
-"kinova_joint_finger_1" -> "kinova_link_finger_1"
-"kinova_link_finger_1" -> "kinova_joint_finger_tip_1" [label="xyz: 0.044 -0.003 0 \nrpy: 0 -0 0"]
-"kinova_joint_finger_tip_1" -> "kinova_link_finger_tip_1"
-"kinova_link_6" -> "kinova_joint_finger_2" [label="xyz: 0.02226 -0.02707 -0.11482 \nrpy: -1.5708 0.649262 -1.38614"]
-"kinova_joint_finger_2" -> "kinova_link_finger_2"
-"kinova_link_finger_2" -> "kinova_joint_finger_tip_2" [label="xyz: 0.044 -0.003 0 \nrpy: 0 -0 0"]
-"kinova_joint_finger_tip_2" -> "kinova_link_finger_tip_2"
-"kinova_link_6" -> "kinova_joint_finger_3" [label="xyz: -0.02226 -0.02707 -0.11482 \nrpy: -1.5708 0.649262 -1.75545"]
-"kinova_joint_finger_3" -> "kinova_link_finger_3"
-"kinova_link_finger_3" -> "kinova_joint_finger_tip_3" [label="xyz: 0.044 -0.003 0 \nrpy: 0 -0 0"]
-"kinova_joint_finger_tip_3" -> "kinova_link_finger_tip_3"
 "kinova_link_base" -> "kinova_link_base_to_kinova_link_base_inertia" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
 "kinova_link_base_to_kinova_link_base_inertia" -> "kinova_link_base_inertia"
 }

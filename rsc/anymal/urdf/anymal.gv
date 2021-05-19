@@ -1,0 +1,68 @@
+digraph G {
+node [shape=box];
+"base" [label="base"];
+"LF_HIP" [label="LF_HIP"];
+"LF_THIGH" [label="LF_THIGH"];
+"LF_SHANK" [label="LF_SHANK"];
+"LF_ADAPTER" [label="LF_ADAPTER"];
+"LF_FOOT" [label="LF_FOOT"];
+"LH_HIP" [label="LH_HIP"];
+"LH_THIGH" [label="LH_THIGH"];
+"LH_SHANK" [label="LH_SHANK"];
+"LH_ADAPTER" [label="LH_ADAPTER"];
+"LH_FOOT" [label="LH_FOOT"];
+"RF_HIP" [label="RF_HIP"];
+"RF_THIGH" [label="RF_THIGH"];
+"RF_SHANK" [label="RF_SHANK"];
+"RF_ADAPTER" [label="RF_ADAPTER"];
+"RF_FOOT" [label="RF_FOOT"];
+"RH_HIP" [label="RH_HIP"];
+"RH_THIGH" [label="RH_THIGH"];
+"RH_SHANK" [label="RH_SHANK"];
+"RH_ADAPTER" [label="RH_ADAPTER"];
+"RH_FOOT" [label="RH_FOOT"];
+"base_inertia" [label="base_inertia"];
+node [shape=ellipse, color=blue, fontcolor=blue];
+"base" -> "LF_HAA" [label="xyz: 0.277 0.116 0 \nrpy: 0 -0 0"]
+"LF_HAA" -> "LF_HIP"
+"LF_HIP" -> "LF_HFE" [label="xyz: 0.0635 0.041 0 \nrpy: 0 -0 0"]
+"LF_HFE" -> "LF_THIGH"
+"LF_THIGH" -> "LF_KFE" [label="xyz: 0 0.109 -0.25 \nrpy: 0 -0 0"]
+"LF_KFE" -> "LF_SHANK"
+"LF_SHANK" -> "LF_SHANK_TO_ADAPTER" [label="xyz: 0.1 -0.02 0 \nrpy: 0 -0 0"]
+"LF_SHANK_TO_ADAPTER" -> "LF_ADAPTER"
+"LF_ADAPTER" -> "LF_ADAPTER_TO_FOOT" [label="xyz: 0 0 -0.32125 \nrpy: 0 -0 0"]
+"LF_ADAPTER_TO_FOOT" -> "LF_FOOT"
+"base" -> "LH_HAA" [label="xyz: -0.277 0.116 0 \nrpy: 0 -0 0"]
+"LH_HAA" -> "LH_HIP"
+"LH_HIP" -> "LH_HFE" [label="xyz: -0.0635 0.041 0 \nrpy: 0 -0 0"]
+"LH_HFE" -> "LH_THIGH"
+"LH_THIGH" -> "LH_KFE" [label="xyz: -0 0.109 -0.25 \nrpy: 0 -0 0"]
+"LH_KFE" -> "LH_SHANK"
+"LH_SHANK" -> "LH_SHANK_TO_ADAPTER" [label="xyz: -0.1 -0.02 0 \nrpy: 0 -0 0"]
+"LH_SHANK_TO_ADAPTER" -> "LH_ADAPTER"
+"LH_ADAPTER" -> "LH_ADAPTER_TO_FOOT" [label="xyz: -0 0 -0.32125 \nrpy: 0 -0 0"]
+"LH_ADAPTER_TO_FOOT" -> "LH_FOOT"
+"base" -> "RF_HAA" [label="xyz: 0.277 -0.116 0 \nrpy: 0 -0 0"]
+"RF_HAA" -> "RF_HIP"
+"RF_HIP" -> "RF_HFE" [label="xyz: 0.0635 -0.041 0 \nrpy: 0 -0 0"]
+"RF_HFE" -> "RF_THIGH"
+"RF_THIGH" -> "RF_KFE" [label="xyz: 0 -0.109 -0.25 \nrpy: 0 -0 0"]
+"RF_KFE" -> "RF_SHANK"
+"RF_SHANK" -> "RF_SHANK_TO_ADAPTER" [label="xyz: 0.1 0.02 0 \nrpy: 0 -0 0"]
+"RF_SHANK_TO_ADAPTER" -> "RF_ADAPTER"
+"RF_ADAPTER" -> "RF_ADAPTER_TO_FOOT" [label="xyz: 0 -0 -0.32125 \nrpy: 0 -0 0"]
+"RF_ADAPTER_TO_FOOT" -> "RF_FOOT"
+"base" -> "RH_HAA" [label="xyz: -0.277 -0.116 0 \nrpy: 0 -0 0"]
+"RH_HAA" -> "RH_HIP"
+"RH_HIP" -> "RH_HFE" [label="xyz: -0.0635 -0.041 0 \nrpy: 0 -0 0"]
+"RH_HFE" -> "RH_THIGH"
+"RH_THIGH" -> "RH_KFE" [label="xyz: -0 -0.109 -0.25 \nrpy: 0 -0 0"]
+"RH_KFE" -> "RH_SHANK"
+"RH_SHANK" -> "RH_SHANK_TO_ADAPTER" [label="xyz: -0.1 0.02 0 \nrpy: 0 -0 0"]
+"RH_SHANK_TO_ADAPTER" -> "RH_ADAPTER"
+"RH_ADAPTER" -> "RH_ADAPTER_TO_FOOT" [label="xyz: -0 -0 -0.32125 \nrpy: 0 -0 0"]
+"RH_ADAPTER_TO_FOOT" -> "RH_FOOT"
+"base" -> "base_to_base_inertia" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"base_to_base_inertia" -> "base_inertia"
+}

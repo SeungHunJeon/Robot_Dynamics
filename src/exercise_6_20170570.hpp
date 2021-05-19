@@ -385,5 +385,6 @@ inline Eigen::VectorXd getGeneralizedForce (const raisim::ArticulatedSystem* rob
 
   GenForce << A * B - robot->getGeneralizedVelocity().e();
 
+
   return GenForce;
 }

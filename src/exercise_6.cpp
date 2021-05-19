@@ -40,7 +40,6 @@ int main(int argc, char* argv[]) {
         std::cout<<"failed. pushing at "<<world.getContactProblem()->at(0).imp_i.norm()/world.getTimeStep()<<std::endl;
     }
     /// you get grade if you pass for 10 consecutive runs
-
     world.integrate1();
   }
 

@@ -19,10 +19,11 @@ int main(int argc, char* argv[]) {
   // kinova configuration
   Eigen::VectorXd gc(kinova->getGeneralizedCoordinateDim()), gv(kinova->getDOF());
   gc << 0.0, 2.56, -1.5, 0.0, 2.0, 0.0;
+
   kinova->setGeneralizedCoordinate(gc);
   kinova->setIntegrationScheme(raisim::ArticulatedSystem::IntegrationScheme::EULER);
   raisim::Vec<3> posDes{0.5, -0.1, 0.4}, posCur, posDiff;
-  raisim::Vec<4> quatDes{0, 1, 0, 0}, quatCur, quatDiff;
+  raisim::Vec<4> quatDes{0, 0, 1, 0}, quatCur, quatDiff;
   raisim::Mat<3,3> rotCur;
 
   // visualization
@@ -38,6 +39,10 @@ int main(int argc, char* argv[]) {
     raisim::rotMatToQuat(rotCur, quatCur);
     posDiff = posDes - posCur;
     quatDiff = quatDes - quatCur;
+//    std::cout << "posDiff : " << posDiff << std::endl;
+//    std::cout << "quatDiff : " << quatDiff << std::endl;
+    std::cout << "posDiff.e() : " << posDiff.e().norm() << std::endl;
+    std::cout << "quatDiff.e() : " << quatDiff.e().norm() << std::endl;
     if(posDiff.e().norm() < 1e-5 && quatDiff.e().norm() < 1e-4) {
       std::cout<<"passed "<<std::endl;
     }
