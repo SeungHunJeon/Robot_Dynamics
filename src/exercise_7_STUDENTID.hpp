@@ -49,10 +49,6 @@ class Ball {
   Eigen::VectorXd gv_dot;
   Eigen::Vector3d pos;
   Eigen::Vector3d vel;
-  Eigen::Vector3d acc;
-  Eigen::Vector3d ang;
-  Eigen::Vector3d ang_vel;
-  Eigen::Vector3d ang_acc;
   Eigen::Matrix<double, 6, 6> Spatial_mass_matrix;
   Eigen::Matrix<double, 3, 6> Ja;
   Eigen::Matrix<double, 3, 6> Jc;
@@ -96,13 +92,11 @@ class SimulationClass {
 
     ball_1.radius = 0.5;
     ball_1.pos << 0, 0, 0.7;
-    ball_1.acc << gravity;
     ball_1.cal();
 
 
     ball_2.radius = 0.7;
     ball_2.pos << 0.1, 0.1, 3;
-    ball_2.acc << gravity;
     ball_2.cal();
 
   }
@@ -113,6 +107,31 @@ class SimulationClass {
     vector(2), 0, -vector(0),
     -vector(1), vector(0), 0;
     return skew;
+  }
+
+  Eigen::Matrix3d Contact_Rotation(const Eigen::Vector3d axis) {
+    Eigen::Matrix3d R, R_z, R_y;
+    double theta;
+    double phi;
+    if(axis(1) >= 0) {
+      theta = acos(axis(0)/axis.head(2).norm());
+    }
+    if(axis(1) < 0) {
+      theta = acos(axis(0)/axis.head(2).norm())+M_PI;
+    }
+    phi = acos(axis(2)/axis.norm());
+
+    R_z << cos(theta), -sin(theta), 0,
+    sin(theta), cos(theta), 0,
+    0, 0, 1;
+
+    R_y << cos(phi), 0, sin(phi),
+    0, 1, 0,
+    -sin(phi), 0, cos(phi);
+
+    R << R_z*R_y;
+
+    return R;
   }
 
   Eigen::Vector3d get_z_direction(const Eigen::Vector3d v_imp, const Eigen::Vector3d axis) {
@@ -137,21 +156,21 @@ class SimulationClass {
 
   void Contact_integrate() {
 
-    if(Contact_2.isContact == false) {
-      ball_1.gv << ball_1.gv + ball_1.gv_dot * dt;
+    if(Contact_2.isContact == false && Contact_1.isContact == false) {
+      ball_1.gv += ball_1.gv_dot * dt;
     }
 
-    if(Contact_3.isContact == false) {
-      ball_2.gv << ball_2.gv + ball_2.gv_dot * dt;
+    if(Contact_3.isContact == false && Contact_1.isContact == false) {
+      ball_2.gv += ball_2.gv_dot * dt;
     }
 
-    if(Contact_2.isContact == true) {
+    if(Contact_2.isContact == true && Contact_1.isContact == false) {
       while (std::abs((ball_1.ground_contact.lambda-ball_1.ground_contact.lambda_prev).norm()) > 1e-8) {
 
         ball_1.ground_contact.lambda_prev << ball_1.ground_contact.lambda;
 
         /// Computation term of v_imp
-        ball_1.ground_contact.v_imp << ball_1.vel + ball_1.ground_contact.M_app_inv*ball_1.ground_contact.lambda -
+        ball_1.ground_contact.v_imp << ball_1.gv.head(3) + ball_1.ground_contact.M_app_inv*ball_1.ground_contact.lambda -
           ball_1.ground_contact.Jc*ball_1.Spatial_mass_matrix.inverse()*dt*ball_1.ground_contact.b;
 
         /// set v_imp, v_imp_z, v_imp_t
@@ -165,27 +184,32 @@ class SimulationClass {
 
 
         /// proj t
+        ball_1.ground_contact.lambda_t << ball_1.ground_contact.lambda_t - (ball_1.ground_contact.v_imp_t*ball_1.ground_contact.C_t);
+        if(ball_1.ground_contact.lambda_t(0) / ball_1.ground_contact.v_imp_t(0) >= 0)
+          ball_1.ground_contact.lambda_t.setZero();
         if(ball_1.ground_contact.lambda_t.norm() >= ball_1.mu * ball_1.ground_contact.lambda_z.norm()) {
           ball_1.ground_contact.lambda_t << ball_1.ground_contact.lambda_t/ball_1.ground_contact.lambda_t.norm()*(ball_1.mu*ball_1.ground_contact.lambda_z.norm());
         }
 
-        ball_1.ground_contact.lambda_t << ball_1.ground_contact.lambda_t - (ball_1.ground_contact.v_imp_t*ball_1.ground_contact.C_t);
+
 
         /// integrate lambda_t, lambda_z into lambda
         ball_1.ground_contact.lambda << ball_1.ground_contact.lambda_t + ball_1.ground_contact.lambda_z;
-//        std::cout << "ball_1.ground_contact.lambda" << ball_1.ground_contact.lambda << std::endl;
+        std::cout << "ball_1.ground_contact.lambda" << ball_1.ground_contact.lambda << std::endl;
+        std::cout << "ball_1.v_imp : " << ball_1.ground_contact.v_imp << std::endl;
 
       }
-      ball_1.gv << ball_1.Spatial_mass_matrix.inverse()*dt*(-ball_1.b+ball_1.ground_contact.Jc.transpose()*ball_1.ground_contact.lambda/dt);
+      ball_1.ground_contact.lambda_prev << 1, 1, 1;
+      ball_1.gv = ball_1.gv + ball_1.Spatial_mass_matrix.inverse()*dt*(-ball_1.b+ball_1.ground_contact.Jc.transpose()*ball_1.ground_contact.lambda/dt);
 //      ball_1.gv.segment(0,3) << ball_1.ground_contact.v_imp;
     }
 
-    if(Contact_3.isContact == true) {
+    if(Contact_3.isContact == true && Contact_1.isContact == false) {
       while (std::abs((ball_2.ground_contact.lambda-ball_2.ground_contact.lambda_prev).norm()) > 1e-8) {
         ball_2.ground_contact.lambda_prev << ball_2.ground_contact.lambda;
 
         /// Computation term of v_imp
-        ball_2.ground_contact.v_imp << ball_2.vel + ball_2.ground_contact.M_app_inv*ball_2.ground_contact.lambda -
+        ball_2.ground_contact.v_imp << ball_2.gv.head(3) + ball_2.ground_contact.M_app_inv*ball_2.ground_contact.lambda -
             ball_2.ground_contact.Jc*ball_2.Spatial_mass_matrix.inverse()*dt*ball_2.ground_contact.b;
 
         /// set v_imp, v_imp_z, v_imp_t
@@ -199,25 +223,27 @@ class SimulationClass {
 
 
         /// proj t
+        ball_2.ground_contact.lambda_t << ball_2.ground_contact.lambda_t - (ball_2.ground_contact.v_imp_t*ball_2.ground_contact.C_t);
+        if(ball_2.ground_contact.lambda_t(0) / ball_2.ground_contact.v_imp_t(0) >= 0)
+          ball_2.ground_contact.lambda_t.setZero();
         if(ball_2.ground_contact.lambda_t.norm() >= ball_2.mu * ball_2.ground_contact.lambda_z.norm()) {
           ball_2.ground_contact.lambda_t << ball_2.ground_contact.lambda_t/ball_2.ground_contact.lambda_t.norm()*(ball_2.mu*ball_2.ground_contact.lambda_z.norm());
         }
 
-        ball_2.ground_contact.lambda_t << ball_2.ground_contact.lambda_t - (ball_2.ground_contact.v_imp_t*ball_2.ground_contact.C_t);
+
 
         /// integrate lambda_t, lambda_z into lambda
         ball_2.ground_contact.lambda << ball_2.ground_contact.lambda_t + ball_2.ground_contact.lambda_z;
 
       }
-//      std::cout << "ball_2.gv_dot" << ball_2.gv << std::endl;
-      ball_2.gv << ball_2.Spatial_mass_matrix.inverse()*dt*(-ball_2.b+ball_2.ground_contact.Jc.transpose()*ball_2.ground_contact.lambda/dt);
-//      std::cout << "ball_2.gv_dot2" << ball_2.gv << std::endl;
+      ball_2.ground_contact.lambda_prev << 1, 1, 1;
+      ball_2.gv = ball_2.gv + ball_2.Spatial_mass_matrix.inverse()*dt*(-ball_2.b+ball_2.ground_contact.Jc.transpose()*ball_2.ground_contact.lambda/dt);
 
 
     }
 
     if(Contact_1.isContact == true) {
-      while (std::abs((ball_1.ball_contact.lambda-ball_1.ball_contact.lambda_prev).norm()) > 1e-6) {
+      while (std::abs((ball_1.ball_contact.lambda-ball_1.ball_contact.lambda_prev).norm()) > 1e-8) {
 
 
 
@@ -225,18 +251,18 @@ class SimulationClass {
         ball_2.ball_contact.lambda << -ball_1.ball_contact.lambda;
 
         /// Computation term of v_imp
-        ball_1.ball_contact.v_imp << ball_1.vel-ball_2.vel + (ball_1.ball_contact.M_app_inv + ball_2.ball_contact.M_app_inv)*ball_1.ball_contact.lambda +
+        ball_1.ball_contact.v_imp << ball_1.gv.head(3)-ball_2.gv.head(3) + (ball_1.ball_contact.M_app_inv + ball_2.ball_contact.M_app_inv)*ball_1.ball_contact.lambda +
             dt*(-ball_1.ball_contact.Jc*ball_1.Spatial_mass_matrix.inverse()*ball_1.ball_contact.b + ball_2.ball_contact.Jc*ball_2.Spatial_mass_matrix.inverse()*ball_2.ball_contact.b);
 
-        ball_2.ball_contact.v_imp << ball_2.vel-ball_1.vel + (ball_1.ball_contact.M_app_inv + ball_2.ball_contact.M_app_inv)*(ball_2.ball_contact.lambda) +
+        ball_2.ball_contact.v_imp << ball_2.gv.head(3)-ball_1.gv.head(3) + (ball_1.ball_contact.M_app_inv + ball_2.ball_contact.M_app_inv)*(ball_2.ball_contact.lambda) +
             dt*(-ball_2.ball_contact.Jc*ball_2.Spatial_mass_matrix.inverse()*ball_2.ball_contact.b + ball_1.ball_contact.Jc*ball_1.Spatial_mass_matrix.inverse()*ball_1.ball_contact.b);
 
         /// set v_imp, v_imp_t, v_imp_z
-//        ball_1.ball_contact.v_imp_z << 0, 0, ball_1.ball_contact.v_imp.transpose() * ((Contact_1.pos-ball_1.pos)/((Contact_1.pos-ball_1.pos).norm()));
-//
-//        ball_1.ball_contact.v_imp_t << ball_1.ball_contact.v_imp - ball_1.ball_contact.v_imp_z;
-        ball_1.ball_contact.v_imp_z << get_z_direction(ball_1.ball_contact.v_imp, (Contact_1.pos-ball_1.pos));
-        ball_1.ball_contact.v_imp_t << get_t_direction(ball_1.ball_contact.v_imp, (Contact_1.pos-ball_1.pos));
+//        ball_1.ball_contact.v_imp_z << get_z_direction(ball_1.ball_contact.v_imp, (Contact_1.pos-ball_1.pos));
+//        ball_1.ball_contact.v_imp_t << get_t_direction(ball_1.ball_contact.v_imp, (Contact_1.pos-ball_1.pos));
+
+        ball_1.ball_contact.v_imp_z << 0, 0, (Contact_Rotation(Contact_1.pos-ball_1.pos).transpose()*ball_1.ball_contact.v_imp)(2);
+        ball_1.ball_contact.v_imp_t << (Contact_Rotation(Contact_1.pos-ball_1.pos).transpose()*ball_1.ball_contact.v_imp).head(2), 0;
 
 //        ball_1.ball_contact.v_imp_t << ball_1.ball_contact.v_imp - ball_1.ball_contact.v_imp_z;
         std::cout << "v_imp_z" << ball_1.ball_contact.v_imp_z <<std::endl;
@@ -244,50 +270,57 @@ class SimulationClass {
         std::cout << "v_imp" << ball_1.ball_contact.v_imp <<std::endl;
 
 
-//        ball_1.ball_contact.lambda_z << 0, 0, ball_1.ball_contact.lambda.transpose() * ((Contact_1.pos-ball_1.pos)/((Contact_1.pos-ball_1.pos).norm()));
+//        ball_1.ball_contact.lambda_z << get_z_direction(ball_1.ball_contact.lambda, (Contact_1.pos-ball_1.pos));
 //        std::cout << "lambda_z : " << ball_1.ball_contact.lambda_z << std::endl;
-//        ball_1.ball_contact.lambda_t << ball_1.ball_contact.lambda - ball_1.ball_contact.lambda_z;
+//        ball_1.ball_contact.lambda_t << get_t_direction(ball_1.ball_contact.lambda, (Contact_1.pos-ball_1.pos));
 //        std::cout << "lambda_t : " << ball_1.ball_contact.lambda_t << std::endl;
 
-        ball_1.ball_contact.lambda_z << get_z_direction(ball_1.ball_contact.lambda, (Contact_1.pos-ball_1.pos));
+        ball_1.ball_contact.lambda_z << 0, 0, (Contact_Rotation(Contact_1.pos-ball_1.pos).transpose()*ball_1.ball_contact.lambda)(2);
         std::cout << "lambda_z : " << ball_1.ball_contact.lambda_z << std::endl;
-        ball_1.ball_contact.lambda_t << get_t_direction(ball_1.ball_contact.lambda, (Contact_1.pos-ball_1.pos));
+        ball_1.ball_contact.lambda_t << (Contact_Rotation(Contact_1.pos-ball_1.pos).transpose()*ball_1.ball_contact.lambda).head(2), 0;
         std::cout << "lambda_t : " << ball_1.ball_contact.lambda_t << std::endl;
+
 
         /// proj z
         ball_1.ball_contact.lambda_z(2) = std::max(0.0, ball_1.ball_contact.lambda_z(2) - ball_1.ball_contact.v_imp_z(2)*ball_1.ball_contact.C_z);
 
         std::cout << "lambda_z : " << ball_1.ball_contact.lambda_z << std::endl;
         /// proj t
+
+        ball_1.ball_contact.lambda_t << ball_1.ball_contact.lambda_t - (ball_1.ball_contact.v_imp_t*ball_1.ball_contact.C_t);
+
+        if(ball_1.ball_contact.lambda_t(0) / ball_1.ball_contact.v_imp_t(0) >= 0)
+          ball_1.ball_contact.lambda_t.setZero();
+
         if(ball_1.ball_contact.lambda_t.norm() >= ball_1.mu * ball_1.ball_contact.lambda_z.norm()) {
 
-          if(ball_1.ball_contact.lambda_z.norm() < 1e-6)
-            ball_1.ball_contact.lambda_t << 0, 0, 0;
-          else
+//          if(ball_1.ball_contact.lambda_z.norm() < 1e-6)
+//            ball_1.ball_contact.lambda_t << 0, 0, 0;
+//          else
+
             ball_1.ball_contact.lambda_t << ball_1.ball_contact.lambda_t/(ball_1.ball_contact.lambda_t.norm())*(ball_1.mu * ball_1.ball_contact.lambda_z.norm());
         }
 
-        ball_1.ball_contact.lambda_t << ball_1.ball_contact.lambda_t - (ball_1.ball_contact.v_imp_t*ball_1.ball_contact.C_t);
+
         std::cout << "Ct : " << ball_1.ball_contact.C_t << std::endl;
         std::cout << "lambda_t : " << ball_1.ball_contact.lambda_t << std::endl;
         /// integrate lambda with lambda_t & lambda_z
-        ball_1.ball_contact.lambda << ball_1.ball_contact.lambda_t + ball_1.ball_contact.lambda_z;
+        ball_1.ball_contact.lambda << (Contact_Rotation(Contact_1.pos-ball_1.pos)*(ball_1.ball_contact.lambda_t + ball_1.ball_contact.lambda_z));
 
         std::cout << ball_1.ball_contact.lambda << std::endl; /// I need to modify
       }
 
       std::cout << "ball_1.ball_contact.lambda" << ball_1.ball_contact.lambda << std::endl;
       std::cout << "ball_2.ball_contact.lambda" << ball_2.ball_contact.lambda << std::endl;
-      ball_1.gv << ball_1.Spatial_mass_matrix.inverse()*dt*(-ball_1.b+ball_1.ball_contact.Jc.transpose()*ball_1.ball_contact.lambda/dt);
-      ball_2.gv << ball_2.Spatial_mass_matrix.inverse()*dt*(-ball_2.b+ball_2.ball_contact.Jc.transpose()*ball_2.ball_contact.lambda/dt);
+//      ball_1.ball_contact.lambda_prev << 1, 1, 2;
+      ball_1.gv += ball_1.Spatial_mass_matrix.inverse()*dt*(-ball_1.b+ball_1.ball_contact.Jc.transpose()*ball_1.ball_contact.lambda/dt);
+      ball_2.gv += ball_2.Spatial_mass_matrix.inverse()*dt*(-ball_2.b+ball_2.ball_contact.Jc.transpose()*ball_2.ball_contact.lambda/dt);
     }
 
 
-    ball_1.pos << ball_1.pos + ball_1.gv.segment(0, 3) * dt;
-    ball_2.pos << ball_2.pos + ball_2.gv.segment(0,3)*dt;
 
-//    std::cout << ball_1.pos << std::endl;
-//    std::cout << ball_1.gv << std::endl;
+
+
   };
 
   void isContact() {
@@ -302,15 +335,15 @@ class SimulationClass {
       /// compute ball_1
       ball_1.ball_contact.Jc << Identity_3, skew(Contact_1.pos-ball_1.pos);
       ball_1.ball_contact.M_app_inv << ball_1.ball_contact.Jc*ball_1.Spatial_mass_matrix.inverse()*ball_1.ball_contact.Jc.transpose();
-      ball_1.ball_contact.C_z = 0.5/ball_1.ball_contact.M_app_inv(8);
-      ball_1.ball_contact.C_t = 0.5/std::max(ball_1.ball_contact.M_app_inv(0),ball_1.ball_contact.M_app_inv(4));
+      ball_1.ball_contact.C_z = 0.2/ball_1.ball_contact.M_app_inv(8);
+      ball_1.ball_contact.C_t = 0.2/std::max(ball_1.ball_contact.M_app_inv(0),ball_1.ball_contact.M_app_inv(4));
       ball_1.ball_contact.b << ball_1.Ja.transpose()*skew(ball_1.gv.tail(3))*(ball_1.Inertia_matrix*ball_1.gv.tail(3)) - ball_1.ball_contact.Jc.transpose()*gravity*ball_1.Mass;
       ball_1.b << ball_1.Ja.transpose()*skew(ball_1.gv.tail(3))*(ball_1.Inertia_matrix*ball_1.gv.tail(3)) - ball_1.Jc.transpose()*gravity*ball_1.Mass;
       /// compute ball_2
       ball_2.ball_contact.Jc << Identity_3, skew(Contact_1.pos-ball_2.pos);
       ball_2.ball_contact.M_app_inv << ball_2.ball_contact.Jc*ball_2.Spatial_mass_matrix.inverse()*ball_2.ball_contact.Jc.transpose();
-      ball_2.ball_contact.C_z = 0.5/ball_2.ball_contact.M_app_inv(8);
-      ball_2.ball_contact.C_t = 0.5/std::max(ball_2.ball_contact.M_app_inv(0),ball_2.ball_contact.M_app_inv(4));
+      ball_2.ball_contact.C_z = 0.2/ball_2.ball_contact.M_app_inv(8);
+      ball_2.ball_contact.C_t = 0.2/std::max(ball_2.ball_contact.M_app_inv(0),ball_2.ball_contact.M_app_inv(4));
       ball_2.ball_contact.b << ball_2.Ja.transpose()*skew(ball_2.gv.tail(3))*(ball_2.Inertia_matrix*ball_2.gv.tail(3)) - ball_2.ball_contact.Jc.transpose()*gravity*ball_2.Mass;
       ball_2.b << ball_2.Ja.transpose()*skew(ball_2.gv.tail(3))*(ball_2.Inertia_matrix*ball_2.gv.tail(3)) - ball_2.Jc.transpose()*gravity*ball_2.Mass;
     } else
@@ -354,6 +387,8 @@ class SimulationClass {
     isContact();
     Contact_integrate();
 
+    ball_1.pos << ball_1.pos + ball_1.gv.segment(0, 3) * dt;
+    ball_2.pos << ball_2.pos + ball_2.gv.segment(0,3)*dt;
   }
 
   void setPosition(raisim::Visuals * sphere1, raisim::Visuals * sphere2) {
@@ -362,7 +397,7 @@ class SimulationClass {
   }
  private:
   double dt = 0.001;
-  Eigen::Vector3d gravity, acc_1, acc_2, vel_1, vel_2, pos_1, pos_2;
+  Eigen::Vector3d gravity;
   Ball ball_1, ball_2;
   Contact Contact_1, Contact_2, Contact_3;
   Eigen::Matrix3d Identity_3;
